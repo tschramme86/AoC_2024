@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -61,7 +62,9 @@ namespace AoC2024.Days
             var result = SolvePartTwoInternal(testData);
             if(!object.Equals(result, this.ExpectedTestResultPartTwo))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Day {Day}: Test data failed for Part Two (expected {this.ExpectedTestResultPartTwo} but got {result})");
+                Console.ResetColor();
                 return false;
             }
             Console.WriteLine($"Day {Day}: Test data passed for Part Two, result = {result}");
@@ -73,8 +76,18 @@ namespace AoC2024.Days
             this.IsOnTestData = false;
 
             var inputData = GetInputData();
+            
+            var sw = new Stopwatch();
+            sw.Start();
             var result = SolvePartOneInternal(inputData);
-            Console.WriteLine($"Day {Day}: Part One result = {result}");
+            sw.Stop();
+
+            Console.Write($"Day {Day}: Part One result = ");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write($"{result}    ");
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"(took {sw.Elapsed.TotalMilliseconds:0.##} ms)");
+            Console.ResetColor();
         }
 
         public void SolvePartTwo()
@@ -82,8 +95,18 @@ namespace AoC2024.Days
             this.IsOnTestData = false;
 
             var inputData = GetInputData();
+
+            var sw = new Stopwatch();
+            sw.Start();
             var result = SolvePartTwoInternal(inputData);
-            Console.WriteLine($"Day {Day}: Part Two result = {result}");
+            sw.Stop();
+
+            Console.Write($"Day {Day}: Part Two result = ");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write($"{result}    ");
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine($"(took {sw.Elapsed.TotalMilliseconds:0.##} ms)");
+            Console.ResetColor();
         }
 
         protected virtual object SolvePartOneInternal(string[] inputData)

@@ -23,42 +23,66 @@ namespace AoC2024.Days.Day06
         protected override object SolvePartOneInternal(string[] inputData)
         {
             this.ParseMap(inputData);
-            return this.SimulateWalk(null);
+            return this.SimulateWalk();
         }
 
         protected override object SolvePartTwoInternal(string[] inputData)
         {
             this.ParseMap(inputData);
             var creatingLoopPositions = 0;
-            Parallel.For(0, this._height, y=> {
-                for(var x=0; x<this._width; x++) {
-                    if(this._map[x,y] || (this._start.x == x && this._start.y == y)) continue;
-                    if(this.SimulateWalk((x,y)) < 0)
-                        Interlocked.Increment(ref creatingLoopPositions);
-                }
-            });
+            Parallel.For(0, this._height, 
+                () => 0,
+                (y, loop, localState) =>
+                {
+                    var lsum = 0;
+                    for (var x = 0; x < this._width; x++)
+                    {
+                        if (this._map[x, y] || (this._start.x == x && this._start.y == y)) continue;
+                        if (this.SimulateWalkHasLoop((x, y)))
+                            lsum++;
+                    }
+                    return localState + lsum;
+                },
+                localState => Interlocked.Add(ref creatingLoopPositions, localState)
+            );
+
             return creatingLoopPositions;
         }
 
-        private int SimulateWalk((int x, int y)? additionalObstacle) {
+        private int SimulateWalk() {
             var visited = new HashSet<(int x, int y)>();
-            var visitedWDir = new HashSet<(int x, int y, int d)>();
             var pos = this._start;
             var d = 0;
-            var obs = additionalObstacle ?? (-100, -100);
             while(true) {
                 visited.Add(pos);
-                if(visitedWDir.Contains((x: pos.x, y: pos.y, d: d))) return -1;
-                visitedWDir.Add((x: pos.x, y: pos.y, d: d));
                 var next = this.AddP(pos, this._directions[d]);
                 if(next.x < 0 || next.y < 0 || next.x >= this._width || next.y >= this._height) break;
-                if(this._map[next.x, next.y] || (obs.x == next.x && obs.y == next.y))
+                if(this._map[next.x, next.y])
                     d = (d + 1) % 4;
                 else
                     pos = next;
             }
 
             return visited.Count;
+        }
+
+        private bool SimulateWalkHasLoop((int x, int y) additionalObstacle)
+        {
+            var visitedWDir = new HashSet<(int x, int y, int d)>();
+            var pos = this._start;
+            var d = 0;
+            while (true)
+            {
+                if (!visitedWDir.Add((x: pos.x, y: pos.y, d: d))) return true;
+                var next = this.AddP(pos, this._directions[d]);
+                if (next.x < 0 || next.y < 0 || next.x >= this._width || next.y >= this._height) break;
+                if (this._map[next.x, next.y] || (additionalObstacle.x == next.x && additionalObstacle.y == next.y))
+                    d = (d + 1) % 4;
+                else
+                    pos = next;
+            }
+
+            return false;
         }
 
         private void ParseMap(string[] inputData)
