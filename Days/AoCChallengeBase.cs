@@ -47,7 +47,9 @@ namespace AoC2024.Days
             var result = SolvePartOneInternal(testData);
             if(!object.Equals(result, this.ExpectedTestResultPartOne))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"Day {Day}: Test data failed for Part One (expected {this.ExpectedTestResultPartOne} but got {result})");
+                Console.ResetColor();
                 return false;
             }
             Console.WriteLine($"Day {Day}: Test data passed for Part One, result = {result}");

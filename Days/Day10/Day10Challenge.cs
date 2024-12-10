@@ -10,6 +10,11 @@ namespace AoC2024.Days.Day10
 {
     internal class Day10Challenge : AoCChallengeBase
     {
+        enum TrailheadCalculationType
+        {
+            Score,
+            Rating
+        }
 
         public override int Day => 10;
         public override string Name => "Hoof It";
@@ -28,7 +33,7 @@ namespace AoC2024.Days.Day10
             var sum = 0;
             foreach (var trailhead in this._trailheads)
             {
-                var thScore = this.CalcTrailheadScore([trailhead], 0);
+                var thScore = this.CalcTrailhead([[trailhead]], 0, TrailheadCalculationType.Score);
                 sum += thScore;
             }
             return sum;
@@ -40,41 +45,13 @@ namespace AoC2024.Days.Day10
             var sum = 0;
             foreach (var trailhead in this._trailheads)
             {
-                var thRating = this.CalcTrailheadRating([[trailhead]], 0);
+                var thRating = this.CalcTrailhead([[trailhead]], 0, TrailheadCalculationType.Rating);
                 sum += thRating;
             }
             return sum;
         }
 
-        private int CalcTrailheadScore(List<(int x, int y)> stepLocations, int level)
-        {
-            ArgumentNullException.ThrowIfNull(this._map);
-
-            var nextLocations = new HashSet<(int x, int y)>();
-            foreach (var step in stepLocations)
-            {
-                (int x, int y)[] neighbors = [
-                    (step.x - 1, step.y),
-                    (step.x + 1, step.y),
-                    (step.x, step.y - 1),
-                    (step.x, step.y + 1)
-                ];
-                foreach (var neighbor in neighbors)
-                {
-                    if (neighbor.x < 0 || neighbor.x >= this._width || neighbor.y < 0 || neighbor.y >= this._height) continue;
-                    if (this._map[neighbor.x, neighbor.y] == level + 1)
-                        nextLocations.Add(neighbor);
-                }
-            }
-
-            if (level == 8) return nextLocations.Count;
-            if (nextLocations.Count > 0)
-                return this.CalcTrailheadScore(nextLocations.ToList(), level + 1);
-
-            return 0;
-        }
-
-        private int CalcTrailheadRating(List<(int x, int y)[]> paths, int level)
+        private int CalcTrailhead(List<(int x, int y)[]> paths, int level, TrailheadCalculationType calculationType)
         {
             ArgumentNullException.ThrowIfNull(this._map);
             var newPaths = new List<(int x, int y)[]>();
@@ -99,8 +76,12 @@ namespace AoC2024.Days.Day10
                     }
                 }
             }
-            if(level == 8) return newPaths.Count;
-            return this.CalcTrailheadRating(newPaths, level + 1);
+            if (level == 8)
+            {
+                return calculationType == TrailheadCalculationType.Rating ?
+                    newPaths.Count : newPaths.Select(p => p[^1]).Distinct().Count();
+            }
+            return this.CalcTrailhead(newPaths, level + 1, calculationType);
         }
 
         private void ParseHikingMap(string[] inputData)
