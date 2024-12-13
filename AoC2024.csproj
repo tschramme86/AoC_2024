@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Google.OrTools" Version="9.8.3296" />
+    <PackageReference Include="Google.OrTools" Version="9.11.4210" />
     <PackageReference Include="Microsoft.Z3" Version="4.12.2" />
     <PackageReference Include="Microsoft.Z3.x86" Version="4.12.2" />
   </ItemGroup>
@@ -55,6 +55,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Days\Day07\d07_input_test.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Days\Day13\d13_input.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Days\Day13\d13_input_test.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Days\Day12\d12_input.txt">
