@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Numerics;
+using static Google.OrTools.ConstraintSolver.RoutingModel.ResourceGroup;
 namespace AoC2024;
 
 public static class MathHelpers
@@ -19,7 +21,13 @@ public static class MathHelpers
         => a / GreatestCommonDivisor(a, b) * b;
     
     public static T LeastCommonMultiple<T>(this IEnumerable<T> values) where T : INumber<T>
-        => values.Aggregate(LeastCommonMultiple);
+    => values.Aggregate(LeastCommonMultiple);
+
+    public static double Variance(this IEnumerable<double> values)
+    {
+        var avg = values.Average();
+        return values.Average(v => Math.Pow(v - avg, 2));
+    }
 
     public static bool IsBetween<T>(this T value, T v1, T v2) where T : INumber<T>
     {
