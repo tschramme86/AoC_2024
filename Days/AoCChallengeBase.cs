@@ -9,6 +9,14 @@ namespace AoC2024.Days
 {
     internal abstract class AoCChallengeBase : AoCChallenge
     {
+        public enum Direction
+        {
+            North,
+            East,
+            South,
+            West
+        }
+
         public virtual int Day { get; }
         public virtual string Name { get; } = string.Empty;
 
