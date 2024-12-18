@@ -112,11 +112,13 @@ namespace AoC2024.Days.Day16
                 Direction = Direction.East,
             };
             bestPaths[(this._startPosition.x, this._startPosition.y, startStep.Direction)] = [startStep];
-            var listOfEnds = new List<MazeStep> { startStep };
+            var listOfEnds = new List<MazeStep>(128) { startStep };
+            var newListOfEnds = new List<MazeStep>(128);
+            var maxC = 0;
             do
             {
                 // calculate next steps
-                var newListOfEnds = new List<MazeStep>();
+                newListOfEnds.Clear();
                 foreach (var end in listOfEnds)
                 {
                     var moveTo = this.AddP(end.Position, this._moveDirections[end.Direction]);
@@ -163,14 +165,14 @@ namespace AoC2024.Days.Day16
                         }
                     }
                 }
-
+                maxC = Math.Max(maxC, newListOfEnds.Count);
                 // check whether one next steps leads to a better path to a position
                 listOfEnds.Clear();
                 foreach (var newEnd in newListOfEnds)
                 {
                     var idx = (newEnd.Position.x, newEnd.Position.y, newEnd.Direction);
                     if(!bestPaths.TryGetValue(idx, out var bestPathsForPos))
-                        bestPaths[idx] = bestPathsForPos = [];
+                        bestPaths[idx] = bestPathsForPos = new List<MazeStep>(8);
 
                     var oldScore = bestPathsForPos.FirstOrDefault()?.TotalScore ?? int.MaxValue;
                     var newScore = newEnd.TotalScore;
@@ -186,7 +188,7 @@ namespace AoC2024.Days.Day16
             } while (listOfEnds.Count > 0);
 
             // return best paths
-            var allBestPaths = new List<MazeStep>();
+            var allBestPaths = new List<MazeStep>(32);
 
             if (bestPaths.TryGetValue((this._endPosition.x, this._endPosition.y, Direction.East), out var bestPathsEast))
                 allBestPaths.AddRange(bestPathsEast);

@@ -68,12 +68,13 @@ namespace AoC2024.Days.Day06
 
         private bool SimulateWalkHasLoop((int x, int y) additionalObstacle)
         {
-            var visitedWDir = new HashSet<(int x, int y, int d)>();
+            var visitedMap = new bool[this._width, this._height, 4];
             var pos = this._start;
             var d = 0;
             while (true)
             {
-                if (!visitedWDir.Add((x: pos.x, y: pos.y, d: d))) return true;
+                if (visitedMap[pos.x, pos.y, d]) return true;
+                visitedMap[pos.x, pos.y, d] = true;
                 var next = this.AddP(pos, this._directions[d]);
                 if (next.x < 0 || next.y < 0 || next.x >= this._width || next.y >= this._height) break;
                 if (this._map[next.x, next.y] || (additionalObstacle.x == next.x && additionalObstacle.y == next.y))
