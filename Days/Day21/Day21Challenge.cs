@@ -20,19 +20,19 @@ namespace AoC2024.Days.Day21
             public int Steps { get; set; }
             public Direction? MoveToHere { get; set; }
         }
-
         abstract class BacktrackKeypad
         {
             protected abstract char[] Keys { get; }
             protected abstract Dictionary<char, (int x, int y)> KeyPositions { get; }
-            public Dictionary<(char, char), List<List<Direction>>> PossibleWays { get; } = [];
+            public Dictionary<(char, char), List<Direction>> WayFromTo { get; } = [];
+            public Dictionary<(char, char), string> SequenceFromTo { get; } = [];
 
             protected abstract int KeypadWidth { get; }
             protected abstract int KeypadHeight { get; }
 
             public void BuildMap()
             {
-                this.PossibleWays.Clear();
+                this.WayFromTo.Clear();
                 var mapPositionToKey = this.KeyPositions.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
 
                 foreach (var startKey in this.Keys)
@@ -93,13 +93,57 @@ namespace AoC2024.Days.Day21
                             way.Reverse();
                             possibleWays.Add(way);
                         }
-                        this.PossibleWays[(startKey, targetKey)] = possibleWays;
+
+                        var isGoingLeft = this.KeyPositions[startKey].x > this.KeyPositions[targetKey].x;
+                        var wayComplexity = possibleWays.ToLookup(_dChanges);
+                        var minWayComplexity = wayComplexity.Min(g => g.Key);
+                            
+                            
+                        var bestSequence = this.ReducePossibleSequences(wayComplexity[minWayComplexity].ToList(), isGoingLeft);
+                        this.WayFromTo[(startKey, targetKey)] = bestSequence;
+
+                        var sb = new StringBuilder();
+                        foreach (var d in bestSequence)
+                        {
+                            sb.Append(d switch
+                            {
+                                Direction.North => '^',
+                                Direction.East => '>',
+                                Direction.South => 'v',
+                                Direction.West => '<',
+                                _ => throw new ArgumentOutOfRangeException()
+                            });
+                        }
+                        sb.Append('A');
+                        this.SequenceFromTo[(startKey, targetKey)] = sb.ToString();
                     }
                 }
+
+                int _dChanges(List<Direction> path)
+                {
+                    var result = 0;
+                    for (var i = 1; i < path.Count; i++)
+                    {
+                        if (path[i] != path[i - 1])
+                            result++;
+                    }
+                    return result;
+                }
+            }
+
+            private List<Direction> ReducePossibleSequences(List<List<Direction>> sequences, bool preferLeRiFirst)
+            {
+                if(sequences.Count == 1)
+                    return sequences[0];
+
+                return sequences.OrderBy(s =>
+                {
+                    if(preferLeRiFirst)
+                        return s[0] == Direction.West || s[0] == Direction.East ? 0 : 1;
+                    return s[0] == Direction.North || s[0] == Direction.South ? 0 : 1;
+                }).First();
             }
         }
-
-
         class BacktrackDoorKeypad : BacktrackKeypad
         {
             protected override char[] Keys => ['A', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -119,12 +163,7 @@ namespace AoC2024.Days.Day21
             };
             protected override int KeypadWidth => 3;
             protected override int KeypadHeight => 4;
-
-            public void BacktrackCode(string code)
-            {
-            }
         }
-
         class BacktrackDirectionalKeypad : BacktrackKeypad
         {
             protected override char[] Keys => ['A', '^', 'v', '<', '>'];
@@ -138,17 +177,13 @@ namespace AoC2024.Days.Day21
             };
             protected override int KeypadWidth => 3;
             protected override int KeypadHeight => 2;
-
-            public void BacktrackCode(string code)
-            {
-            }
         }
 
         public override int Day => 21;
         public override string Name => "Keypad Conundrum";
 
-        protected override object ExpectedTestResultPartOne => 126384;
-        protected override object ExpectedTestResultPartTwo => 285;
+        protected override object ExpectedTestResultPartOne => 126384L;
+        protected override object ExpectedTestResultPartTwo => 154115708116294L;
 
         private readonly Dictionary<Direction, char> _dToC = new()
         {
@@ -168,9 +203,9 @@ namespace AoC2024.Days.Day21
             return this.Solve(inputData, 25);
         }
 
-        private int Solve(string[] inputData, int involvedDirectionalKeypadRobots)
+        private long Solve(string[] inputData, int involvedDirectionalKeypadRobots)
         {
-            var result = 0;
+            var result = 0L;
             foreach (var code in inputData)
             {
                 var moves = CalculateCodeMoves(code, involvedDirectionalKeypadRobots);
@@ -181,7 +216,7 @@ namespace AoC2024.Days.Day21
             return result;
         }
 
-        private int CalculateCodeMoves(string code, int involvedDirectionalKeypadRobots)
+        private long CalculateCodeMoves(string code, int involvedDirectionalKeypadRobots)
         {
             var doorKeypad = new BacktrackDoorKeypad();
             doorKeypad.BuildMap();
@@ -189,81 +224,46 @@ namespace AoC2024.Days.Day21
             var directionalKeypad = new BacktrackDirectionalKeypad();
             directionalKeypad.BuildMap();
 
-            var minCodeLength = int.MaxValue;
-            var minCode = string.Empty;
-
-            foreach(var s0 in GetPossibleSequences(code, doorKeypad))
-            {
-                var thisSequenceList = new List<string>(4096) { s0 };
-                var nextSequenceList = new List<string>(4096);
-                for (var i = 0; i < involvedDirectionalKeypadRobots; i++)
-                {
-                    Console.WriteLine($" - iteration {i}, sequence list size = {thisSequenceList.Count}");
-                    nextSequenceList.Clear();
-                    foreach (var s in thisSequenceList)
-                    {
-                        nextSequenceList.AddRange(GetPossibleSequences(s, directionalKeypad));
-                    }
-                    (thisSequenceList, nextSequenceList) = (nextSequenceList, thisSequenceList);
-                }
-
-                foreach(var finalSequence in thisSequenceList)
-                {
-                    if (finalSequence.Length < minCodeLength)
-                    {
-                        minCodeLength = finalSequence.Length;
-                        minCode = finalSequence;
-                    }
-                }
-            }
-
-            return minCodeLength;
+            this._sequenceLengthCache.Clear();
+            var sequence = this.BacktrackCode(code, doorKeypad);
+            return this.CalculateSequenceLength(sequence, involvedDirectionalKeypadRobots, directionalKeypad);
         }
 
-        private Dictionary<string, List<string>> _cache = [];
-        private List<string> GetPossibleSequences(string code, BacktrackKeypad keypad)
+        private readonly Dictionary<(char s, char e, int level), long> _sequenceLengthCache = [];
+        private long CalculateSequenceLength(string code, int it, BacktrackKeypad keypad)
         {
-            if (this._cache.ContainsKey(code))
-                return this._cache[code];
+            if(it == 0)
+                return code.Length;
 
-            var result = new List<string>();
-            var startKey = 'A';
-            var sequences = new List<List<Direction>>[code.Length];
-            for(var i=0; i<code.Length; i++)
+            var totalLength = 0L;
+            var prevKey = 'A';
+            foreach (var nextKey in code)
             {
-                sequences[i] = keypad.PossibleWays[(startKey, code[i])];
+                if (!this._sequenceLengthCache.TryGetValue((prevKey, nextKey, it), out var length))
+                {
+                    var expandedSequence = keypad.SequenceFromTo[(prevKey, nextKey)];
+                    length = this.CalculateSequenceLength(expandedSequence, it - 1, keypad);
+                    this._sequenceLengthCache[(prevKey, nextKey, it)] = length;
+                }
+                totalLength += length;
+                prevKey = nextKey;
+            }
+            return totalLength;
+        }
+
+        private string BacktrackCode(string code, BacktrackKeypad keypad, char startKey = 'A')
+        {
+            var sb = new StringBuilder();
+            for (var i = 0; i < code.Length; i++)
+            {
+                foreach (var d in keypad.WayFromTo[(startKey, code[i])])
+                {
+                    sb.Append(_dToC[d]);
+                }
+                sb.Append('A');
                 startKey = code[i];
             }
-            _generateSequences(0, [], result);
-
-            this._cache[code] = result;
-            return result;
-
-            void _generateSequences(int index, List<List<Direction>> soFar, List<string> target)
-            {
-                if (index == code.Length)
-                {
-                    var sb = new StringBuilder();
-                    foreach (var seq in soFar)
-                    {
-                        foreach (var d in seq)
-                        {
-                            sb.Append(_dToC[d]);
-                        }
-                        sb.Append('A');
-                    }
-                    target.Add(sb.ToString());
-                }
-                else
-                {
-                    foreach(var nextSequence in sequences[index])
-                    {
-                        var newSequences = new List<List<Direction>>(soFar);
-                        newSequences.Add(nextSequence);
-                        _generateSequences(index + 1, newSequences, target);
-                    }
-                }
-            }
+            return sb.ToString();
         }
     }
 }
