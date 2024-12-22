@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Numerics;
 using static Google.OrTools.ConstraintSolver.RoutingModel.ResourceGroup;
-namespace AoC2024;
+namespace AoC2024.Helper;
 
 public static class MathHelpers
 {
@@ -19,7 +19,7 @@ public static class MathHelpers
 
     public static T LeastCommonMultiple<T>(T a, T b) where T : INumber<T>
         => a / GreatestCommonDivisor(a, b) * b;
-    
+
     public static T LeastCommonMultiple<T>(this IEnumerable<T> values) where T : INumber<T>
     => values.Aggregate(LeastCommonMultiple);
 
@@ -40,7 +40,7 @@ public static class MathHelpers
     public static (double x, double y, double z) Normalize((double x, double y, double z) v)
     {
         var len = Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-        return (x: (v.x / len), y: (v.y / len), z:(v.z / len));
+        return (x: v.x / len, y: v.y / len, z: v.z / len);
     }
 
     public static (double x, double y, double z) Multiply3D((double x, double y, double z) v, double factor)

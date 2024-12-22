@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AoC2024
+namespace AoC2024.Helper
 {
     public static class FnCache
     {

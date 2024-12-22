@@ -1,12 +1,8 @@
 ﻿using AoC2024.Helper;
-using Google.OrTools.LinearSolver;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace AoC2024.Days.Day21
